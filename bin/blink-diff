@@ -92,7 +92,8 @@ function printHelp () {
 	console.log("    --h-shift           Acceptable horizontal shift of pixel. (default: 0)");
 	console.log("    --v-shift           Acceptable vertical shift of pixel. (default: 0)");
 	console.log("    --block-out x,y,w,h Block-out area. Can be repeated multiple times.");
-	console.log("    --bockOutOpacity d  Block-out opacity. (default: 1)")
+	console.log("    --blockOutOpacity d  Block-out opacity. (default: 1)")
+	console.log("    --blockOutOutputOpacity d Block-out output opacity (doesn't affect comparison) (default: 1.0)")
 	console.log("    --version           Print version");
 	console.log("    --help              This help");
 	console.log("");
@@ -145,7 +146,7 @@ function parseArgs (argv) {
 			} else if (argv[i] == "--hide-shift") {
 				options.hideShift = true;
 
-			} else if (argv[i] == "--blockOutOpacity") {
+			} else if (argv[i] == "--blockOutOpacityOutput") {
 				if (++i < argLength) {
 
 					temporary = parseInt(argv[i], 10);
