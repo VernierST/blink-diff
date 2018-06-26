@@ -1,0 +1,8 @@
+title: Blink-diff
+description: A lightweight image comparison tool
+google_analytics: UA-56408730-8
+show_downloads: true
+theme: jekyll-theme-cayman
+
+gems:
+  - jekyll-mentions
