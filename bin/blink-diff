@@ -156,16 +156,6 @@ function parseArgs (argv) {
 					options.blockOutOpacity = temporary;
 				}
 
-			} else if (argv[i] == "--blockOutOutputOpacity") {
-				if (++i < argLength) {
-
-					temporary = parseInt(argv[i], 10);
-					if (temporary < 0 || temporary > 1) {
-						throw new Error("--blockOutOutputOpacity must be value between 0 and 1.");
-					}
-					options.blockOutOpacity = temporary;
-				}
-
 			} else if (argv[i] == "--copyImageA") {
 				options.copyImageAToOutput = true;
 				options.copyImageBToOutput = false;

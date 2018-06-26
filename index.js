@@ -74,11 +74,9 @@ function load(value, defaultValue) {
  *
  * @property {PNGImage} _imageA
  * @property {PNGImage} _imageACompare
- * @property {PNGImage} _imageAOutput
  * @property {string} _imageAPath
  * @property {PNGImage} _imageB
  * @property {PNGImage} _imageBCompare
- * @property {PNGImage} _imageBOutput
  * @property {string} _imageBPath
  * @property {PNGImage} _imageOutput
  * @property {string} _imageOutputPath
@@ -184,9 +182,9 @@ function BlinkDiff (options) {
 	}
 
 	this._blockOut = load(options.blockOut, []);
-	//if (typeof this._blockOut != 'object' && (this._blockOut.length !== undefined)) {
+	if (typeof this._blockOut != 'object' && (this._blockOut.length !== undefined)) {
 		this._blockOut = [this._blockOut];
-	//}
+	}
 
 	this._blockOutRed = load(options.blockOutRed, 0);
 	this._blockOutGreen = load(options.blockOutGreen, 0);
@@ -352,7 +350,7 @@ BlinkDiff.prototype = {
 	 * @param {function} fn
 	 */
 	run: function (fn) {
-		console.log(this._blockOutOutputOpacity);
+
 		var promise = Promise.resolve(), result;
 
 		PNGImage.log = function (text) {
@@ -548,7 +546,6 @@ BlinkDiff.prototype = {
 			};
 			for (i = 0, len = this._blockOut.length; i < len; i++) {
 				rect = this._blockOut[i];
-				console.log(this._blockOut[i])
 				// Make sure the block-out parameters fit
 				this._correctDimensions(this._imageACompare.getWidth(), this._imageACompare.getHeight(), rect);
 
