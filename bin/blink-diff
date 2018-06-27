@@ -149,7 +149,7 @@ function parseArgs (argv) {
 			} else if (argv[i] == "--blockOutOutputOpacity") {
 				if (++i < argLength) {
 
-					temporary = parseInt(argv[i], 10);
+					temporary = parseFloat(argv[i]);
 					if (temporary < 0 || temporary > 1) {
 						throw new Error("--blockOutOutputOpacity must be value between 0 and 1.");
 					}
