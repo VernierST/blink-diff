@@ -146,14 +146,14 @@ function parseArgs (argv) {
 			} else if (argv[i] == "--hide-shift") {
 				options.hideShift = true;
 
-			} else if (argv[i] == "--blockOutOpacityOutput") {
+			} else if (argv[i] == "--blockOutOutputOpacity") {
 				if (++i < argLength) {
 
 					temporary = parseInt(argv[i], 10);
 					if (temporary < 0 || temporary > 1) {
-						throw new Error("--blockOutOpacity must be value between 0 and 1.");
+						throw new Error("--blockOutOutputOpacity must be value between 0 and 1.");
 					}
-					options.blockOutOpacity = temporary;
+					options.blockOutOutputOpacity = temporary;
 				}
 
 			} else if (argv[i] == "--copyImageA") {
