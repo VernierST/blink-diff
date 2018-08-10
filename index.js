@@ -23,7 +23,7 @@ function load(value, defaultValue) {
  * @param {int} [options.imageOutputLimit=BlinkDiff.OUTPUT_ALL] Determines when an image output is created
  * @param {string} [options.thresholdType=BlinkDiff.THRESHOLD_PIXEL] Defines the threshold of the comparison
  * @param {int} [options.threshold=500] Threshold limit according to the comparison limit.
- * @param {number} [options.delta=20] Distance between the color coordinates in the 4 dimensional color-space that will not trigger a difference.
+ * @param {number} [options.delta=40] Distance between the color coordinates in the 4 dimensional color-space that will not trigger a difference.
  * @param {int} [options.outputMaskRed=255] Value to set for red on difference pixel. 'Undefined' will not change the value.
  * @param {int} [options.outputMaskGreen=0] Value to set for green on difference pixel. 'Undefined' will not change the value.
  * @param {int} [options.outputMaskBlue=0] Value to set for blue on difference pixel. 'Undefined' will not change the value.
@@ -67,7 +67,7 @@ function load(value, defaultValue) {
  * @param {int} [options.cropImageB.width] Width of cropping region (default: Width that is left)
  * @param {int} [options.cropImageB.height] Height of cropping region (default: Height that is left)
  * @param {boolean} [options.perceptual=false] Turns perceptual comparison on
- * @param {float} [options.gamma] Gamma correction for all colors
+ * @param {float} [options.gamma = 1.0] Gamma correction for all colors
  * @param {float} [options.gammaR] Gamma correction for red
  * @param {float} [options.gammaG] Gamma correction for green
  * @param {float} [options.gammaB] Gamma correction for blue
@@ -159,7 +159,7 @@ function BlinkDiff (options) {
 	this._outputMaskBlue = load(options.outputMaskBlue, 0);
 	this._outputMaskAlpha = load(options.outputMaskAlpha, 255);
 	this._outputMaskOpacity = load(options.outputMaskOpacity, 0.7);
-	
+
 	this._outputBackgroundRed = load(options.outputBackgroundRed, 0);
 	this._outputBackgroundGreen = load(options.outputBackgroundGreen, 0);
 	this._outputBackgroundBlue = load(options.outputBackgroundBlue, 0);
