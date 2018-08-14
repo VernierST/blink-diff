@@ -22,7 +22,7 @@ function load(value, defaultValue) {
  * @param {string} [options.imageOutputPath=undefined] Path to output image file
  * @param {int} [options.imageOutputLimit=BlinkDiff.OUTPUT_ALL] Determines when an image output is created
  * @param {string} [options.thresholdType=BlinkDiff.THRESHOLD_PIXEL] Defines the threshold of the comparison
- * @param {int} [options.threshold=500] Threshold limit according to the comparison limit.
+ * @param {int} [options.threshold=100] Threshold limit according to the comparison limit.
  * @param {number} [options.delta=20] Distance between the color coordinates in the 4 dimensional color-space that will not trigger a difference.
  * @param {int} [options.outputMaskRed=255] Value to set for red on difference pixel. 'Undefined' will not change the value.
  * @param {int} [options.outputMaskGreen=0] Value to set for green on difference pixel. 'Undefined' will not change the value.
@@ -67,7 +67,7 @@ function load(value, defaultValue) {
  * @param {int} [options.cropImageB.width] Width of cropping region (default: Width that is left)
  * @param {int} [options.cropImageB.height] Height of cropping region (default: Height that is left)
  * @param {boolean} [options.perceptual=false] Turns perceptual comparison on
- * @param {float} [options.gamma = 1.0] Gamma correction for all colors
+ * @param {float} [options.gamma] Gamma correction for all colors
  * @param {float} [options.gammaR] Gamma correction for red
  * @param {float} [options.gammaG] Gamma correction for green
  * @param {float} [options.gammaB] Gamma correction for blue
@@ -946,15 +946,15 @@ BlinkDiff.prototype = {
 			c1: color.c1 / 255, c2: color.c2 / 255, c3: color.c3 / 255, c4: color.c4
 		};
 
-		if (gamma || gamma.R !== undefined || gamma.G !== undefined || gamma.B !== undefined) {
-			if (gamma.R !== undefined) {
-				result.c1 = Math.pow(result.c1, gamma.R);
+		if (gamma || gamma.r !== undefined || gamma.g !== undefined || gamma.g !== undefined) {
+			if (gamma.r !== undefined) {
+				result.c1 = Math.pow(result.c1, gamma.r);
 			}
-			if (gamma.G !== undefined) {
-				result.c2 = Math.pow(result.c2, gamma.G);
+			if (gamma.g !== undefined) {
+				result.c2 = Math.pow(result.c2, gamma.g);
 			}
-			if (gamma.B !== undefined) {
-				result.c3 = Math.pow(result.c3, gamma.B);
+			if (gamma.b !== undefined) {
+				result.c3 = Math.pow(result.c3, gamma.b);
 			}
 		}
 
