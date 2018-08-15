@@ -103,12 +103,12 @@ The command-line tool exposes a couple of flags and parameters for the compariso
 --help                    This help
 ```
 
-**For Vernier**
+###For Vernier
 
 Added on Vernier's fork are additional features from the object usage for use within the command-line tool.
 The purpose of this fork is to use blink-diff for QA testing of images.
 
-###New flags
+**New flags:**
 
 Color filtering: When testing for color differences, blink-diff applies an algorithm to calculate the distance between colors in 4D color space. The steps for this conversion are RGB[0-255] to RGB[0-1], RGB-1 to XYZ, and XYZ to CIELAB. If the gamma
 	flag is used, the gamma exponent is applied to the R, G, or B values after they are converted to 0-1. The result of that is that the changed values decrease to be exponentially smaller, as does the differences between them. This makes it more 
