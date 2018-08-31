@@ -76,31 +76,32 @@ Only PNGs are supported at this point.
 
 The command-line tool exposes a couple of flags and parameters for the comparison:
 ```
---verbose                 Turn on verbose mode
---debug                   Turn on debug mode - leaving all filters and modifications on the result
---threshold p             Number of pixels/percent 'p' below which differences are ignored. (default: 500 pixels)
---threshold-type t        'pixel' and 'percent' as type of threshold. (default: pixel)
---delta p                 Max. distance colors in the 4 dimensional color-space without triggering a difference. (default: 40)
---gamma e                 Base Gamma correction exponent e. (default: 1.0)
---gammaR e                Gamma correction exponent e for red
---gammaG e                Gamma correction exponent e for green
---gammaB e                Gamma correction exponent e for blue
---copyImageA              Copies first image to output as base. (default: true)
---copyImageB              Copies second image to output as base.
---no-copy                 Doesn't copy anything to output as base.
---output o                Write difference to the file 'o'
---filter f                Filters f (separated with comma) that will be applied before the comparison.
---no-composition          Turns the composition feature off
---compose-ltr             Compose output image from left to right
---compose-ttb             Compose output image from top to bottom
---hide-shift              Hides shift highlighting (default: false)
---h-shift                 Acceptable horizontal shift of pixel. (default: 0)
---v-shift                 Acceptable vertical shift of pixel. (default: 0)
---block-out x,y,w,h       Block-out area. Can be repeated multiple times.
---blockOutOpacity d       Block-out opacity. (default: 1)")
---blockOutOutputOpacity d Block-out output opacity (doesn't affect comparison) (default: 1.0)
---version                 Print version
---help                    This help
+--verbose                        Turn on verbose mode
+--debug                          Turn on debug mode - leaving all filters and modifications on the result
+--threshold p                    Number of pixels/percent 'p' below which differences are ignored. (default: 500 pixels)
+--threshold-type t              'pixel' and 'percent' as type of threshold. (default: pixel)
+--delta p                        Max. distance colors in the 4 dimensional color-space without triggering a difference. (default: 40)
+--gamma e                        Base Gamma correction exponent e. (default: 1.0)
+--gammaR e                       Gamma correction exponent e for red
+--gammaG e                       Gamma correction exponent e for green
+--gammaB e                       Gamma correction exponent e for blue
+--copyImageA                     Copies first image to output as base. (default: true)
+--copyImageB                     Copies second image to output as base.
+--no-copy                        Doesn't copy anything to output as base.
+--output o                       Write difference to the file 'o'
+--filter f                       Filters f (separated with comma) that will be applied before the comparison.
+--no-composition                 Turns the composition feature off
+--compose-ltr                    Compose output image from left to right
+--compose-ttb                    Compose output image from top to bottom
+--hide-shift                     Hides shift highlighting (default: false)
+--h-shift                        Acceptable horizontal shift of pixel. (default: 0)
+--v-shift                        Acceptable vertical shift of pixel. (default: 0)
+--block-out x,y,w,h              Block-out area. Can be repeated multiple times.
+--blockOutOpacity d              Block-out opacity. (default: 1)")
+--blockOutOutputOpacity d        Block-out output opacity (doesn't affect comparison) (default: 1.0)
+--version                        Print version
+--floating-region x,y,w,h,x2,y2  Set a floating region.
+--help                           This help
 ```
 
 ###For Vernier
@@ -118,12 +119,20 @@ Color filtering: When testing for color differences, blink-diff applies an algor
 * ```gammaG```
 * ```gammaB```
 
-Compare filtering: This flag adjusts the opacity of block-out filters, which are applied to images pre-comparison. Higher the opacity means fewer differences will be yielded in that region.
+Compare filtering: BlockOutOpacity adjusts the opacity of block-out filters, which are applied to images pre-comparison. Higher the opacity means fewer differences will be yielded in that region. 
+Floating-region allows users to specify one or multiple 'floating regions'- areas that have to match identically but have a designated vertical and horizontal shift for location that they can match within.
 * ```blockOutOpacity```
+*```floating-region```
 
 Output adjustments: This doesn't have any effect on the comparison of images. This feature was added explicitly to the Vernier fork to allow for more verbose output data; it allows users to see block-out regions while still being able to adjust
 	opacity and see the elements underneath from the compared images.
 * ```blockOutOutputOpacity```
+
+**Other changes**
+
+Verbose floating layer output: Floating layer output is modified in the same way as block-outs to allow for more detailed output.
+
+Threshold: The default threshold of 500 was much too high. It has been moved down to 25.
 
 ###Object usage
 
