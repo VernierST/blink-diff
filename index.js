@@ -465,10 +465,17 @@ BlinkDiff.prototype = {
 					//find the border beginning. The minimum is 0 or weird stuff happens.
 					var start_x = Math.max(0, rect.x - border.x_buffer);
 					var start_y = Math.max(0, rect.y - border.y_buffer);
-					
+					var widthMultiplier = 2;
+					var heightMultiplier = 2;
+					if (start_x == 0) {
+						widthMultiplier = 1;
+					}
+					if (start_y == 0) {
+						heightMultiplier = 1;
+					}
 					//Fill the border in first as a 'base layer'
-					this._imageA.fillRect(start_x, start_y, rect.width + border.x_buffer, rect.height + border.y_buffer, floatingBorderColor);
-					this._imageB.fillRect(start_x, start_y, rect.width + border.x_buffer, rect.height + border.y_buffer, floatingBorderColor);
+					this._imageA.fillRect(start_x, start_y, rect.width + (widthMultiplier*border.x_buffer), rect.height + (heightMultiplier*border.y_buffer), floatingBorderColor);
+					this._imageB.fillRect(start_x, start_y, rect.width + (widthMultiplier*border.x_buffer), rect.height + (heightMultiplier*border.y_buffer), floatingBorderColor);
 
 					//Now, fill in the floating region.
 					this._imageA.fillRect(rect.x, rect.y, rect.width, rect.height, floatingColor);
