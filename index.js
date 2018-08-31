@@ -22,7 +22,7 @@ function load(value, defaultValue) {
  * @param {string} [options.imageOutputPath=undefined] Path to output image file
  * @param {int} [options.imageOutputLimit=BlinkDiff.OUTPUT_ALL] Determines when an image output is created
  * @param {string} [options.thresholdType=BlinkDiff.THRESHOLD_PIXEL] Defines the threshold of the comparison
- * @param {int} [options.threshold=100] Threshold limit according to the comparison limit.
+ * @param {int} [options.threshold=250] Threshold limit according to the comparison limit.
  * @param {number} [options.delta=20] Distance between the color coordinates in the 4 dimensional color-space that will not trigger a difference.
  * @param {int} [options.outputMaskRed=255] Value to set for red on difference pixel. 'Undefined' will not change the value.
  * @param {int} [options.outputMaskGreen=0] Value to set for green on difference pixel. 'Undefined' will not change the value.
@@ -40,6 +40,8 @@ function load(value, defaultValue) {
  * @param {int} [options.outputBackgroundAlpha=undefined] Value to set for the alpha channel as background. 'Undefined' will not change the value.
  * @param {float} [options.outputBackgroundOpacity=0.6] Strength of masking the pixel. 1.0 means that the full color will be used; anything less will mix-in the original pixel.
  * @param {object|object[]} [options.blockOut] Object or list of objects with coordinates of blocked-out areas.
+ * @param {object|object[]} [options.floatingRegion] Object or list of objects with coordinates of floating regions.
+ * @param {object|object[]} [options.floatingBuffer] Object or list of objects with value of buffer space on floating region.
  * @param {int} [options.blockOutRed=0] Value to set for red on blocked-out pixel. 'Undefined' will not change the value.
  * @param {int} [options.blockOutGreen=0] Value to set for green on blocked-out pixel. 'Undefined' will not change the value.
  * @param {int} [options.blockOutBlue=0] Value to set for blue on blocked-out pixel. 'Undefined' will not change the value.
@@ -101,6 +103,8 @@ function load(value, defaultValue) {
  * @property {int} _outputBackgroundAlpha
  * @property {float} _outputBackgroundOpacity
  * @property {object[]} _blockOut
+ * @property {object[]} _floatingRegion
+ * @property {object[]} _floatingBuffer
  * @property {int} _blockOutRed
  * @property {int} _blockOutGreen
  * @property {int} _blockOutBlue
@@ -109,6 +113,7 @@ function load(value, defaultValue) {
  * @property {boolean} _copyImageAToOutput
  * @property {boolean} _copyImageBToOutput
  * @property {string[]} _filter
+ * @property {boolean} _floatingRegionsMatch
  * @property {boolean} _debug
  * @property {boolean} _composition
  * @property {boolean} _composeLeftToRight
@@ -134,6 +139,7 @@ function load(value, defaultValue) {
  */
 function BlinkDiff (options) {
 
+	this._floatingRegionsMatch = true;
 	this._imageA = options.imageA;
 	this._imageAPath = options.imageAPath;
 	assert.ok(options.imageAPath || options.imageA, "Image A not given.");
@@ -150,7 +156,7 @@ function BlinkDiff (options) {
 	this._thresholdType = load(options.thresholdType, BlinkDiff.THRESHOLD_PIXEL);
 
 	// How many pixels different to ignore.
-	this._threshold = load(options.threshold, 500);
+	this._threshold = load(options.threshold, 25);
 
 	this._delta = load(options.delta, 20);
 
@@ -184,6 +190,15 @@ function BlinkDiff (options) {
 	this._blockOut = load(options.blockOut, []);
 	if (typeof this._blockOut != 'object' && (this._blockOut.length !== undefined)) {
 		this._blockOut = [this._blockOut];
+	}
+
+	this._floatingRegion = load(options.floatingRegion, []);
+	if (typeof this._floatingRegion != 'object' && (this._floatingRegion.length !== undefined)) {
+		this._floatingRegion = [this._floatingRegion];
+	}
+	this._floatingBuffer = load(options.floatingBuffer, []);
+	if (typeof this._floatingBuffer != 'object' && (this._floatingBuffer.length !== undefined)) {
+		this._floatingBuffer = [this._floatingBuffer];
 	}
 
 	this._blockOutRed = load(options.blockOutRed, 0);
@@ -350,7 +365,6 @@ BlinkDiff.prototype = {
 	 * @param {function} fn
 	 */
 	run: function (fn) {
-
 		var promise = Promise.resolve(), result;
 
 		PNGImage.log = function (text) {
@@ -421,10 +435,44 @@ BlinkDiff.prototype = {
 				this._imageACompare.fillRect(rect.x, rect.y, rect.width, rect.height, color);
 				this._imageBCompare.fillRect(rect.x, rect.y, rect.width, rect.height, color);
 
+				//After the comparison, modify the images to have output that includes transparent(or not) block-out regions.
 				if (this._blockOutOutputOpacity != 1.0) {
 					this._imageA.fillRect(rect.x, rect.y, rect.width, rect.height, outputOpacityColor);
 					this._imageB.fillRect(rect.x, rect.y, rect.width, rect.height, outputOpacityColor);
 				}
+			}
+
+			for (i = 0, len = this._floatingRegion.length; i < len; i++) {
+				rect = this._floatingRegion[i];
+				border = this._floatingBuffer[i]
+				floatingColor = {
+					//yellow
+					red: 255,
+					green: 255,
+					blue: 153,
+					alpha: 255,
+					opacity: 0.6
+				};
+				floatingBorderColor = {
+					//blue
+					red: 102,
+					green: 204,
+					blue: 255,
+					alpha: 255,
+					opacity: 0.5
+				};
+
+					//find the border beginning. The minimum is 0 or weird stuff happens.
+					var start_x = Math.max(0, rect.x - border.x_buffer);
+					var start_y = Math.max(0, rect.y - border.y_buffer);
+					
+					//Fill the border in first as a 'base layer'
+					this._imageA.fillRect(start_x, start_y, rect.width + border.x_buffer, rect.height + border.y_buffer, floatingBorderColor);
+					this._imageB.fillRect(start_x, start_y, rect.width + border.x_buffer, rect.height + border.y_buffer, floatingBorderColor);
+
+					//Now, fill in the floating region.
+					this._imageA.fillRect(rect.x, rect.y, rect.width, rect.height, floatingColor);
+					this._imageB.fillRect(rect.x, rect.y, rect.width, rect.height, floatingColor);
 			}
 
 			// Copy image to composition
@@ -464,7 +512,7 @@ BlinkDiff.prototype = {
 					blue: this._outputBackgroundBlue,
 					alpha: this._outputBackgroundAlpha,
 					opacity: this._outputBackgroundOpacity
-				}, this._hShift, this._vShift, this._perceptual, gamma);
+				}, this._hShift, this._vShift, this._perceptual, gamma, this._floatingRegion, this._floatingBuffer);
 
 			// Create composition if requested
 			if (this._debug) {
@@ -500,7 +548,6 @@ BlinkDiff.prototype = {
 	 * @return {Object} Result of comparison { code, differences, dimension, width, height }
 	 */
 	runSync: function () {
-
 		var result, gamma, i, len, rect, color;
 
 		PNGImage.log = function (text) {
@@ -594,7 +641,9 @@ BlinkDiff.prototype = {
 				},
 				this._hShift, this._vShift,
 				this._perceptual,
-				gamma
+				gamma,
+				this._floatingRegion,
+				this._floatingBuffer
 			);
 
 			// Create composition if requested
@@ -770,6 +819,23 @@ BlinkDiff.prototype = {
 	 */
 	log: function (text) {
 		// Nothing here; Overwrite this to add some functionality
+	},
+
+	/**
+	 *
+	 * @method getFloatingRegionsMatch
+	 */
+	getFloatingRegionsMatch: function () {
+		return this._floatingRegionsMatch;
+	},
+
+	/**
+	 *
+	 * @method setFloatingRegionsMatch
+	 * @param {boolean} floatingRegionsMatch
+	 */
+	setFloatingRegionsMatch: function (boolean) {
+		this._floatingRegionsMatch = boolean;
 	},
 
 
@@ -1125,11 +1191,27 @@ BlinkDiff.prototype = {
 	 * @return {int} Number of pixel differences
 	 * @private
 	 */
-	_pixelCompare: function (imageA, imageB, imageOutput, deltaThreshold, width, height, outputMaskColor, outputShiftColor, backgroundColor, hShift, vShift, perceptual, gamma) {
-		var difference = 0, i, x, y, delta, color1, color2;
-
+	_pixelCompare: function (imageA, imageB, imageOutput, deltaThreshold, width, height, outputMaskColor, outputShiftColor, backgroundColor, hShift, vShift, perceptual, gamma, floatingRegion, floatingBuffer) {
+		var difference = 0, i, x, y, delta, color1, color2, min_x, max_x, min_y, max_y, x_buffer, y_buffer;
+		var floatingRegions = false;
 		for (x = 0; x < width; x++) {
 			for (y = 0; y < height; y++) {
+
+				for (i = 0, len = floatingRegion.length; i < len; i++) {
+				//apply floating region buffer if it is within any of the ranges.
+					min_x = floatingRegion[i].x;
+					min_y = floatingRegion[i].y;
+					max_x = min_x + floatingRegion[i].width;
+					max_y = min_y + floatingRegion[i].height;
+					x_buffer = floatingBuffer[i].x_buffer;
+					y_buffer = floatingBuffer[i].y_buffer;
+					if (min_x < x && x < max_x && min_y < y && y < max_y) {
+						floatingRegions = true;
+						hShift = x_buffer;
+						vShift = y_buffer;
+					}
+				}
+
 				i = imageA.getIndex(x, y);
 
 				color1 = this._getColor(imageA, i, perceptual, gamma);
@@ -1142,6 +1224,10 @@ BlinkDiff.prototype = {
 					if (this._shiftCompare(x, y, color1, deltaThreshold, imageA, imageB, width, height, hShift, vShift, perceptual, gamma) && this._shiftCompare(x, y, color2, deltaThreshold, imageB, imageA, width, height, hShift, vShift, perceptual, gamma)) {
 						imageOutput.setAtIndex(i, outputShiftColor);
 					} else {
+					//NOTE: Here is where you would want to use a counter for pixel difference if you do not want tests to fail with any differences in floating regions.
+						if (floatingRegions) {
+							this.setFloatingRegionsMatch(false);
+						}
 						difference++;
 						imageOutput.setAtIndex(i, outputMaskColor);
 					}
@@ -1188,7 +1274,7 @@ BlinkDiff.prototype = {
 	 * @return {object}
 	 * @private
 	 */
-	_compare: function (imageA, imageB, imageOutput, deltaThreshold, outputMaskColor, outputShiftColor, backgroundColor, hShift, vShift, perceptual, gamma) {
+	_compare: function (imageA, imageB, imageOutput, deltaThreshold, outputMaskColor, outputShiftColor, backgroundColor, hShift, vShift, perceptual, gamma, floatingRegion, floatingBuffer) {
 
 		var result = {
 			code: BlinkDiff.RESULT_UNKNOWN,
@@ -1204,7 +1290,7 @@ BlinkDiff.prototype = {
 		result.dimension = result.width * result.height;
 
 		// Check if identical
-		result.differences = this._pixelCompare(imageA, imageB, imageOutput, deltaThreshold, result.width, result.height, outputMaskColor, outputShiftColor, backgroundColor, hShift, vShift, perceptual, gamma);
+		result.differences = this._pixelCompare(imageA, imageB, imageOutput, deltaThreshold, result.width, result.height, outputMaskColor, outputShiftColor, backgroundColor, hShift, vShift, perceptual, gamma, floatingRegion, floatingBuffer);
 
 		// Result
 		if (result.differences == 0) {
@@ -1212,7 +1298,7 @@ BlinkDiff.prototype = {
 			result.code = BlinkDiff.RESULT_IDENTICAL;
 			return result;
 
-		} else if (this.isAboveThreshold(result.differences, result.dimension)) {
+		} else if (this.isAboveThreshold(result.differences, result.dimension) || !this._floatingRegionsMatch) {
 			this.log("Images are visibly different");
 			this.log(result.differences + " pixels are different");
 			result.code = BlinkDiff.RESULT_DIFFERENT;
