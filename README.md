@@ -120,7 +120,7 @@ Color filtering: When testing for color differences, blink-diff applies an algor
 * ```gammaB```
 
 Compare filtering: BlockOutOpacity adjusts the opacity of block-out filters, which are applied to images pre-comparison. Higher the opacity means fewer differences will be yielded in that region. 
-Floating-region allows users to specify one or multiple 'floating regions'- areas that have to match identically but have a designated vertical and horizontal shift they match within.
+Floating-region allows users to specify one or multiple 'floating regions'- areas that have to match identically but have a designated vertical and horizontal shift for location that they can match within.
 * ```blockOutOpacity```
 *```floating-region```
 

@@ -22,7 +22,7 @@ function load(value, defaultValue) {
  * @param {string} [options.imageOutputPath=undefined] Path to output image file
  * @param {int} [options.imageOutputLimit=BlinkDiff.OUTPUT_ALL] Determines when an image output is created
  * @param {string} [options.thresholdType=BlinkDiff.THRESHOLD_PIXEL] Defines the threshold of the comparison
- * @param {int} [options.threshold=250] Threshold limit according to the comparison limit.
+ * @param {int} [options.threshold=25] Threshold limit according to the comparison limit.
  * @param {number} [options.delta=20] Distance between the color coordinates in the 4 dimensional color-space that will not trigger a difference.
  * @param {int} [options.outputMaskRed=255] Value to set for red on difference pixel. 'Undefined' will not change the value.
  * @param {int} [options.outputMaskGreen=0] Value to set for green on difference pixel. 'Undefined' will not change the value.
