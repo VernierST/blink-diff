@@ -442,6 +442,7 @@ BlinkDiff.prototype = {
 				}
 			}
 
+			/******** Begin: Floating regions implementation ********/
 			for (i = 0, len = this._floatingRegion.length; i < len; i++) {
 				rect = this._floatingRegion[i];
 				border = this._floatingBuffer[i]
@@ -462,25 +463,46 @@ BlinkDiff.prototype = {
 					opacity: 0.5
 				};
 
-					//find the border beginning. The minimum is 0 or weird stuff happens.
-					var start_x = Math.max(0, rect.x - border.x_buffer);
-					var start_y = Math.max(0, rect.y - border.y_buffer);
-					var widthMultiplier = 2;
-					var heightMultiplier = 2;
-					if (start_x == 0) {
-						widthMultiplier = 1;
-					}
-					if (start_y == 0) {
-						heightMultiplier = 1;
-					}
-					//Fill the border in first as a 'base layer'
-					this._imageA.fillRect(start_x, start_y, rect.width + (widthMultiplier*border.x_buffer), rect.height + (heightMultiplier*border.y_buffer), floatingBorderColor);
-					this._imageB.fillRect(start_x, start_y, rect.width + (widthMultiplier*border.x_buffer), rect.height + (heightMultiplier*border.y_buffer), floatingBorderColor);
+				//find the border beginning. The minimum is 0 or weird stuff happens.
+				var start_x = Math.max(0, rect.x - border.x_buffer);
+				var start_y = Math.max(0, rect.y - border.y_buffer);
+				var widthMultiplier = 2;
+				var heightMultiplier = 2;
+				if (start_x == 0) 
+				{
+					widthMultiplier = 1;
+				}
+				if (start_y == 0) 
+				{
+					heightMultiplier = 1;
+				}
 
-					//Now, fill in the floating region.
-					this._imageA.fillRect(rect.x, rect.y, rect.width, rect.height, floatingColor);
-					this._imageB.fillRect(rect.x, rect.y, rect.width, rect.height, floatingColor);
+				//Copy image A and make a sub image of it from the floating region
+				var cropped_A  = PNGImage.copyImage(this._imageA);
+				this._crop("img A", cropped_A, rect);
+				var found_dims = this.lookForIn(cropped_A, this._imageB, start_x, start_y, border.x_buffer * widthMultiplier,
+					start_y * heightMultiplier)
+				
+				if (found_dims) 
+				{
+					//Fill the area it was found, and the original location as block-out, or ignore, areas. Hack-y, 
+					//but I am not sure how else the best way to do this and still track that info is otherwise.
+					this._imageACompare.fillRect(found_dims.x, found_dims.y, rect.width, rect.height, color);
+					this._imageBCompare.fillRect(found_dims.x, found_dims.y, rect.width, rect.height, color);
+					this._imageACompare.fillRect(rect.x, rect.y, rect.width, rect.height, color);
+					this._imageBCompare.fillRect(rect.x, rect.y, rect.width, rect.height, color);
+				}
+				//Fill the border in first as a 'base layer'
+				this._imageA.fillRect(start_x, start_y, rect.width + (widthMultiplier*border.x_buffer), rect.height 
+					+ (heightMultiplier*border.y_buffer), floatingBorderColor);
+				this._imageB.fillRect(start_x, start_y, rect.width + (widthMultiplier*border.x_buffer), rect.height 
+					+ (heightMultiplier*border.y_buffer), floatingBorderColor);
+
+				//Now, fill in the floating region.
+				this._imageA.fillRect(rect.x, rect.y, rect.width, rect.height, floatingColor);
+				this._imageB.fillRect(rect.x, rect.y, rect.width, rect.height, floatingColor);
 			}
+			/******** End: Floating regions implementation ********/
 
 			// Copy image to composition
 			if (this._copyImageAToOutput) {
@@ -546,6 +568,34 @@ BlinkDiff.prototype = {
 			console.error(err.stack);
 			fn(err);
 		});
+	},
+
+	/**
+	 * Looks for the first image within a range of the second provided image
+	 * @method lookForIn
+	 * @return {x, y} Where the first image was found, if any, or null
+	 */
+	lookForIn: function (cropped_A, _imageB, start_x, start_y, x_range, y_range) 
+	{
+		for (i = start_x; i < start_x + x_range; i++) 
+		{
+			for (j = start_y; j < start_y + y_range; j ++) 
+			{
+				var crop_second_dims = {width: cropped_A.getWidth(), height: cropped_A.getHeight(), y: j, x: i};
+				// pass a path, a buffer or a stream as the input
+				var cropped_B  = PNGImage.copyImage(this._imageA);
+				this._crop("img B", cropped_B, crop_second_dims);
+
+				var res = this._compare(cropped_A, cropped_B, null, 0, {}, {}, {}, 0, 0, null, null, 
+					this._floatingRegion, this._floatingBuffer);
+
+				if (res.differences == 0) 
+				{
+					return {x: i, y: j};
+				}
+			}
+		}
+		return null;
 	},
 
 	/**
@@ -989,7 +1039,6 @@ BlinkDiff.prototype = {
 	_getColor: function (image, idx, perceptual, gamma) {
 
 		var color;
-
 		color = {
 			c1: image.getRed(idx), c2: image.getGreen(idx), c3: image.getBlue(idx), c4: image.getAlpha(idx)
 		};
@@ -1145,7 +1194,6 @@ BlinkDiff.prototype = {
 					if ((xOffset != 0) || (yOffset != 0)) {
 
 						i = imageB.getIndex(x + xOffset, y + yOffset);
-
 						color1 = this._getColor(imageA, i, perceptual, gamma);
 						localDeltaThreshold = this._colorDelta(color, color1);
 
@@ -1200,51 +1248,28 @@ BlinkDiff.prototype = {
 	 */
 	_pixelCompare: function (imageA, imageB, imageOutput, deltaThreshold, width, height, outputMaskColor, outputShiftColor, backgroundColor, hShift, vShift, perceptual, gamma, floatingRegion, floatingBuffer) {
 		var difference = 0, i, x, y, delta, color1, color2, min_x, max_x, min_y, max_y, x_buffer, y_buffer;
-		var floatingRegions = false;
+	
 		for (x = 0; x < width; x++) {
 			for (y = 0; y < height; y++) {
-
-				for (i = 0, len = floatingRegion.length; i < len; i++) {
-				//apply floating region buffer if it is within any of the ranges.
-					min_x = floatingRegion[i].x;
-					min_y = floatingRegion[i].y;
-					max_x = min_x + floatingRegion[i].width;
-					max_y = min_y + floatingRegion[i].height;
-					x_buffer = floatingBuffer[i].x_buffer;
-					y_buffer = floatingBuffer[i].y_buffer;
-					if (min_x < x && x < max_x && min_y < y && y < max_y) {
-						floatingRegions = true;
-						hShift = x_buffer;
-						vShift = y_buffer;
-					}
-				}
-
 				i = imageA.getIndex(x, y);
-
 				color1 = this._getColor(imageA, i, perceptual, gamma);
 				color2 = this._getColor(imageB, i, perceptual, gamma);
 
 				delta = this._colorDelta(color1, color2);
-
-				if (delta > deltaThreshold) {
-
-					if (this._shiftCompare(x, y, color1, deltaThreshold, imageA, imageB, width, height, hShift, vShift, perceptual, gamma) && this._shiftCompare(x, y, color2, deltaThreshold, imageB, imageA, width, height, hShift, vShift, perceptual, gamma)) {
-						imageOutput.setAtIndex(i, outputShiftColor);
-					} else {
-					//NOTE: Here is where you would want to use a counter for pixel difference if you do not want tests to fail with any differences in floating regions.
-						if (floatingRegions) {
-							this.setFloatingRegionsMatch(false);
+				if(imageOutput) {
+					if (delta > deltaThreshold) {
+						if (this._shiftCompare(x, y, color1, deltaThreshold, imageA, imageB, width, height, hShift, vShift, perceptual, gamma)) {// && this._shiftCompare(x, y, color2, deltaThreshold, imageB, imageA, width, height, hShift, vShift, perceptual, gamma)) {
+							imageOutput.setAtIndex(i, outputShiftColor);
+						} else {
+							difference++;
+							imageOutput.setAtIndex(i, outputMaskColor);
 						}
-						difference++;
-						imageOutput.setAtIndex(i, outputMaskColor);
+					} else {
+						imageOutput.setAtIndex(i, backgroundColor);
 					}
-
-				} else {
-					imageOutput.setAtIndex(i, backgroundColor);
 				}
 			}
 		}
-
 		return difference;
 	},
 
